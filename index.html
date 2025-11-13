@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>CAMPFIRE 改善案デモ（改訂版）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      background: #f5f5f7;
+    }
+
+    /* ========== 上部ナビ ========== */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #ffffffee;
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid #e0e0e0;
+      padding: 8px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .top-nav-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-right: 8px;
+    }
+    .top-nav-item { position: relative; font-size: 13px; }
+
+    .top-nav-label {
+      text-decoration: none;
+      color: #555;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .top-nav-label::after {
+      content: "▼";
+      font-size: 9px;
+      transform: translateY(1px);
+    }
+    .top-nav-label:hover {
+      border-color: #ff7a59;
+      color: #ff7a59;
+      background: #fff6f2;
+    }
+
+    .top-nav-dropdown {
+      position: absolute;
+      left: 0;
+      top: 32px;
+      min-width: 220px;
+      padding: 8px 0;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      border: 1px solid #eee;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .top-nav-item:hover .top-nav-dropdown {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .top-nav-dropdown a {
+      display: block;
+      padding: 6px 14px;
+      font-size: 13px;
+      text-decoration: none;
+      color: #444;
+    }
+    .top-nav-dropdown a:hover {
+      background: #fff6f2;
+      color: #ff7a59;
+    }
+
+    /* ========== レイアウト ========== */
+    .layout {
+      display: flex;
+      max-width: 1120px;
+      margin: 16px auto 40px;
+      padding: 0 16px;
+      gap: 24px;
+    }
+    .main { flex: 1 1 auto; min-width: 0; }
+    .sidebar { width: 300px; flex: 0 0 auto; }
+    .sidebar-inner { position: sticky; top: 64px; }
+
+    /* ========== セクション ========== */
+    .section { margin-bottom: 32px; }
+
+    .section-header {
+      background: linear-gradient(90deg, #ff7a59, #ffb347);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 17px;
+      margin-bottom: 12px;
+    }
+
+    .subheading {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 16px 0 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .subheading::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #ff7a59;
+    }
+
+    .section-body {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 16px 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      font-size: 14px;
+    }
+
+    /* ========== 支援カード ========== */
+    .inline-support {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #e0e0e0;
+    }
+    .inline-support-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #777;
+      margin-bottom: 6px;
+    }
+
+    .support-card {
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .support-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ff7a59;
+    }
+    .support-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .support-meta {
+      font-size: 11px;
+      color: #777;
+    }
+    .support-btn {
+      margin-top: 4px;
+      align-self: flex-start;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+      border: none;
+      background: #ff5a3c;
+      color: #fff;
+      cursor: pointer;
+    }
+    .support-btn:hover { background: #e64a30; }
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    /* スムーズスクロール */
+    html { scroll-behavior: smooth; }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .sidebar-inner { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== 上部ナビ ========== -->
+  <div class="top-nav">
+    <span class="top-nav-title">ページ内ナビゲーション</span>
+
+    <div class="top-nav-item">
+      <a href="#section-story" class="top-nav-label">ストーリー・ビジョン</a>
+      <div class="top-nav-dropdown">
+        <a href="#story-intro">はじめに</a>
+        <a href="#story-theme">テーマパーク構想</a>
+      </div>
+    </div>
+
+    <div class="top-nav-item">
+      <a href="#section-challenges" class="top-nav-label">地域課題</a>
+      <div class="top-nav-dropdown">
+        <a href="#ch-population">人口</a>
+        <a href="#ch-industry">産業</a>
+      </div>
+    </div>
+
+    <div class="top-nav-item">
+      <a href="#section-value" class="top-nav-label">地域に役立つこと</a>
+      <div class="top-nav-dropdown">
+        <a href="#val-agri">農業支援</a>
+        <a href="#val-food">食品・お酒</a>
+        <a href="#val-welfare">共生社会</a>
+        <a href="#val-future">未来産業</a>
+      </div>
+    </div>
+
+    <div class="top-nav-item">
+      <a href="#section-info" class="top-nav-label">プロジェクト情報</a>
+      <div class="top-nav-dropdown">
+        <a href="#info-support">支援方法</a>
+        <a href="#info-budget">資金の使い道</a>
+        <a href="#info-owner">実行者情報</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== レイアウト ========== -->
+  <div class="layout">
+    <main class="main">
+
+      <!-- ===== 1. ストーリー ===== -->
+      <section id="section-story" class="section">
+        <div class="section-header">1. ストーリー・ビジョン（青森からの挑戦）</div>
+        <div class="section-body">
+
+          <div id="story-intro" class="subheading">① はじめに・過去のクラファン</div>
+          <p>過去の挑戦と支援者への御礼を簡潔にまとめ、現在のプロジェクトがどのような文脈で生まれたのかを説明する。</p>
+
+          <div id="story-theme" class="subheading">② テーマパーク構想（食品・観光・体験）</div>
+          <p>工場見学、試飲体験、温泉とりんごの複合体験など、今回実現したい世界観をストーリーとして整理する。</p>
+
+        </div>
+      </section>
+
+      <!-- ===== 2. 地域課題 ===== -->
+      <section id="section-challenges" class="section">
+        <div class="section-header">2. 地域課題への思い</div>
+        <div class="section-body">
+
+          <div id="ch-population" class="subheading">① 人口</div>
+          <p>青森県は全国でも人口減少が最も深刻な地域の一つ。若年層の流出や地域経済の縮小が続いている。</p>
+
+          <div id="ch-industry" class="subheading">② 産業</div>
+          <p>農業、とくにりんご産業は基幹産業であるが、高齢化・収益性の低下・耕作放棄地など多数の課題を抱えている。</p>
+
+        </div>
+      </section>
+
+      <!-- ===== 3. 地域に役立つこと ===== -->
+      <section id="section-value" class="section">
+        <div class="section-header">3. 地域に役立つこと（関連するリターンも紹介）</div>
+        <div class="section-body">
+
+          <!-- = 3-1 農業支援 = -->
+          <div id="val-agri" class="subheading">① 農業支援（加工用りんごの活用・機械化）</div>
+          <p>加工用りんごの価格改善、小人化栽培、機械化による収穫効率化など、農家の負担軽減と収益向上を目指す取り組み。</p>
+
+          <div class="inline-support">
+            <div class="inline-support-title">農業支援に関連するリターン</div>
+
+            <div id="ret-apple" class="support-card">
+              <div class="support-label">農業応援</div>
+              <div class="support-title">秋の獲れたてりんご詰め合わせ</div>
+              <div class="support-meta">10,000円 / 200名限定</div>
+              <button class="support-btn">このリターンを選ぶ</button>
+            </div>
+          </div>
+
+          <!-- = 3-2 食品とお酒の開発 = -->
+          <div id="val-food" class="subheading">② 食品とお酒の開発</div>
+          <p>シードル・アップルブランデー・食品加工など、青森産りんごの新たな価値創造を担う事業。</p>
+
+          <div class="inline-support">
+            <div class="inline-support-title">食品・お酒に関連するリターン</div>
+
+            <div id="ret-daytour" class="support-card">
+              <div class="support-label">日帰り体験</div>
+              <div class="support-title">工場見学＆試飲体験＆お土産フィナンシェ</div>
+              <div class="support-meta">5,000円 / 500名限定</div>
+              <button class="support-btn">このリターンを選ぶ</button>
+            </div>
+
+            <div id="ret-stay" class="support-card">
+              <div class="support-label">宿泊プラン</div>
+              <div class="support-title">宿泊＋工場見学＋試飲体験セット</div>
+              <div class="support-meta">10,000円 / 200名限定</div>
+              <button class="support-btn">このリターンを選ぶ</button>
+            </div>
+
+            <div id="ret-cider" class="support-card">
+              <div class="support-label">お酒セット</div>
+              <div class="support-title">シードル4種×3本セット</div>
+              <div class="support-meta">10,000円 / 100名限定</div>
+              <button class="support-btn">このリターンを選ぶ</button>
+            </div>
+          </div>
+
+          <!-- = 3-3 共生社会 = -->
+          <div id="val-welfare" class="subheading">③ 共生社会（障がい福祉事業）</div>
+          <p>障がいのある方と共に働ける環境づくりを進め、共生社会の実現を目指す。</p>
+
+          <!-- ※ リターンなし（問題なし） -->
+
+          <!-- = 3-4 未来産業 = -->
+          <div id="val-future" class="subheading">④ 青森の未来産業（アップルレザー等）</div>
+          <p>りんご搾りかすを素材にしたアップルレザーなど、自動車・家具等への応用可能性を持つ次世代型産業への挑戦。</p>
+
+          <div class="inline-support">
+            <div class="inline-support-title">未来産業に関連するリターン</div>
+
+            <div id="ret-barrel" class="support-card">
+              <div class="support-label">樽オーナー</div>
+              <div class="support-title">2025年プライベート50ℓ樽オーナー</div>
+              <div class="support-meta">500,000円 / 5名限定</div>
+              <button class="support-btn">このリターンを選ぶ</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===== 4. プロジェクト情報 ===== -->
+      <section id="section-info" class="section">
+        <div class="section-header">4. プロジェクト情報</div>
+        <div class="section-body">
+
+          <div id="info-support" class="subheading">① 支援方法</div>
+          <p>はじめての方にも分かるよう、支援の手順（プロジェクト確認 → リターン選択 → 決済 → 通知）を簡潔に紹介する。</p>
+
+          <div id="info-budget" class="subheading">② 資金の使い道</div>
+          <p>樽製作、食品開発、設備導入など、今回の資金用途を整理して記載する。</p>
+
+          <div id="info-owner" class="subheading">③ 実行者情報</div>
+          <p>代表者の略歴、事業経歴、地域へ貢献したい思いなどをまとめる。</p>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== 右サイド：リターン一覧 ===== -->
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-title">リターン一覧</div>
+
+        <div class="support-card sidebar-support-card">
+          <div class="support-label">農業応援</div>
+          <div class="support-title">秋の獲れたてりんご詰め合わせ</div>
+          <div class="support-meta">10,000円 / 200名限定</div>
+          <button class="support-btn">このリターンを選ぶ</button>
+        </div>
+
+        <div class="support-card sidebar-support-card">
+          <div class="support-label">日帰り体験</div>
+          <div class="support-title">工場見学＆試飲体験＆お土産フィナンシェ</div>
+          <div class="support-meta">5,000円 / 500名限定</div>
+          <button class="support-btn">このリターンを選ぶ</button>
+        </div>
+
+        <div class="support-card sidebar-support-card">
+          <div class="support-label">宿泊プラン</div>
+          <div class="support-title">宿泊＋工場見学＋試飲体験セット</div>
+          <div class="support-meta">10,000円 / 200名限定</div>
+          <button class="support-btn">このリターンを選ぶ</button>
+        </div>
+
+        <div class="support-card sidebar-support-card">
+          <div class="support-label">お酒セット</div>
+          <div class="support-title">シードル4種×3本セット</div>
+          <div class="support-meta">10,000円 / 100名限定</div>
+          <button class="support-btn">このリターンを選ぶ</button>
+        </div>
+
+        <div class="support-card sidebar-support-card">
+          <div class="support-label">樽オーナー</div>
+          <div class="support-title">2025年プライベート50ℓ樽オーナー</div>
+          <div class="support-meta">500,000円 / 5名限定</div>
+          <button class="support-btn">このリターンを選ぶ</button>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+</body>
+</html>
